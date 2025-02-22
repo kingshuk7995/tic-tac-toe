@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe with AI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-gap: 5px;
+            justify-content: center;
+            margin: 20px auto;
+        }
+        .cell {
+            width: 100px;
+            height: 100px;
+            font-size: 2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: white;
+            border: 2px solid #333;
+            cursor: pointer;
+        }
+        .cell.disabled {
+            cursor: not-allowed;
+        }
+        #status, #score {
+            font-size: 1.2em;
+            margin: 10px;
+        }
+        .button-container {
+            margin-top: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            background: #007BFF;
+            color: white;
+            border-radius: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Tic Tac Toe</h1>
+    <div id="status">You: X | Computer: O</div>
+    <div id="score">Player Wins: 0 | Computer Wins: 0</div>
+    <div class="board" id="board"></div>
+    <div class="button-container">
+        <button id="restart">Restart</button>
+    </div>
+    
+    <script>
+        class TicTacToeAI {
+            evaluate(board) {
+                // Simple evaluation function (AI logic)
+                return board.reduce((acc, val) => acc + val, 0);
+            }
+
+            minimax(board, depth, player, alpha, beta) {
+                let winner = TicTacToeAI.checkWin(board);
+                if (winner !== 0) return winner * (10 - depth);
+                if (!board.includes(0)) return 0;
+                
+                let bestScore = player === 1 ? -Infinity : Infinity;
+                
+                for (let i = 0; i < 9; i++) {
+                    if (board[i] === 0) {
+                        board[i] = player;
+                        let score = this.minimax(board, depth + 1, -player, alpha, beta);
+                        board[i] = 0;
+                        if (player === 1) {
+                            bestScore = Math.max(bestScore, score);
+                            alpha = Math.max(alpha, score);
+                        } else {
+                            bestScore = Math.min(bestScore, score);
+                            beta = Math.min(beta, score);
+                        }
+                        if (beta <= alpha) break;
+                    }
+                }
+                return bestScore;
+            }
+
+            chooseMove(board, player) {
+                let bestMove = -1;
+                let bestScore = player === 1 ? -Infinity : Infinity;
+                
+                for (let i = 0; i < 9; i++) {
+                    if (board[i] === 0) {
+                        board[i] = player;
+                        let score = this.minimax(board, 0, -player, -Infinity, Infinity);
+                        board[i] = 0;
+                        if ((player === 1 && score > bestScore) || (player === -1 && score < bestScore)) {
+                            bestScore = score;
+                            bestMove = i;
+                        }
+                    }
+                }
+                return bestMove;
+            }
+            
+            static checkWin(board) {
+                const winPatterns = [
+                    [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                    [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                    [0, 4, 8], [2, 4, 6]
+                ];
+                for (let pattern of winPatterns) {
+                    if (board[pattern[0]] !== 0 && board[pattern[0]] === board[pattern[1]] && board[pattern[1]] === board[pattern[2]]) {
+                        return board[pattern[0]];
+                    }
+                }
+                return 0;
+            }
+        }
+
+        class TicTacToeGame {
+            constructor() {
+                this.board = Array(9).fill(0);
+                this.currentPlayer = 1;
+                this.ai = new TicTacToeAI();
+                this.playerWins = 0;
+                this.aiWins = 0;
+                this.initBoard();
+            }
+
+            initBoard() {
+                const boardElement = document.getElementById("board");
+                boardElement.innerHTML = "";
+                this.board.forEach((_, index) => {
+                    let cell = document.createElement("div");
+                    cell.classList.add("cell");
+                    cell.dataset.index = index;
+                    cell.addEventListener("click", () => this.handleClick(index));
+                    boardElement.appendChild(cell);
+                });
+                document.getElementById("restart").addEventListener("click", () => this.resetGame());
+            }
+
+            handleClick(index) {
+                if (this.board[index] === 0 && this.currentPlayer === 1) {
+                    this.board[index] = 1;
+                    this.updateBoard();
+                    if (!this.checkEndgame()) {
+                        this.currentPlayer = -1;
+                        setTimeout(() => this.aiMove(), 500);
+                    }
+                }
+            }
+
+            aiMove() {
+                let move = this.ai.chooseMove(this.board, -1);
+                if (move !== -1) this.board[move] = -1;
+                this.updateBoard();
+                this.currentPlayer = 1;
+                this.checkEndgame();
+            }
+
+            updateBoard() {
+                document.querySelectorAll(".cell").forEach((cell, index) => {
+                    cell.textContent = this.board[index] === 1 ? "X" : this.board[index] === -1 ? "O" : "";
+                    cell.classList.toggle("disabled", this.board[index] !== 0);
+                });
+            }
+
+            checkEndgame() {
+                let winner = TicTacToeAI.checkWin(this.board);
+                if (winner !== 0 || !this.board.includes(0)) {
+                    let message = winner === 1 ? "You win!" : winner === -1 ? "AI wins!" : "It's a draw!";
+                    document.getElementById("status").textContent = message;
+                    if (winner === 1) this.playerWins++;
+                    if (winner === -1) this.aiWins++;
+                    document.getElementById("score").textContent = `Player Wins: ${this.playerWins} | AI Wins: ${this.aiWins}`;
+                    return true;
+                }
+                return false;
+            }
+
+            resetGame() {
+                this.board.fill(0);
+                this.currentPlayer = 1;
+                document.getElementById("status").textContent = "You: X | AI: O";
+                this.updateBoard();
+            }
+        }
+        new TicTacToeGame();
+    </script>
+</body>
+</html>
