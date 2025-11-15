@@ -1,0 +1,13 @@
+CompileFlags:
+  Add: [
+    "-target", "wasm32-unknown-emscripten",
+    "--sysroot=/home/kp/emsdk/upstream/emscripten/cache/sysroot",
+    "-I/home/kp/emsdk/upstream/emscripten/cache/sysroot/include",
+    "-DEMSCRIPTEN"
+  ]
+
+Diagnostics:
+  Suppress: ["unknown-warning-option"]
+
+Completion:
+  AllScopes: true
