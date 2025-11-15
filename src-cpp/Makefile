@@ -18,9 +18,9 @@ $(OUT): $(SRC) Makefile
 	-o $(OUT)
 
 move:
-	mkdir -p ../wasm
-	cp build/minmax.js ../wasm/minmax.js
-	cp build/minmax.wasm ../wasm/minmax.wasm
+	mkdir -p ../public/wasm
+	cp build/minmax.js ../public/wasm/minmax.js
+	cp build/minmax.wasm ../public/wasm/minmax.wasm
 
 clean:
 	rm -rf build
